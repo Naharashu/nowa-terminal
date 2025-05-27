@@ -28,7 +28,7 @@ void print_command_output(const char* label, const char* command) {
 }
 
 void create_file(const char *filename) {
-    FILE *file = fopen(filename, "w");  // "w" — запис, створює файл
+    FILE *file = fopen(filename, "w");  
     if (file == NULL) {
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
         printf("cfile: Cannot create file '%s'\n", filename);
@@ -51,13 +51,28 @@ void delete_file(const char *filename) {
     }
 }
 
+void read_file(const char *filename) {
+    FILE *file = fopen(filename, "r");  
+    if (file == NULL) {
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+        printf("read: Cannot read file '%s', maybe is not exist\n", filename);
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        return;
+    }
+    char stringF[65536];
+    while(fgets(stringF, 65536, file)) {
+        printf("%s", stringF);
+    }
+    fclose(file);
+}
+
 
 
 int main() {
     char cwd[1024];
     char command[256];
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    printf("Nowa-Terminal v1.1, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
+    printf("Nowa-Terminal v1.2, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
     while (1) {
         GetCurrentDirectoryA(sizeof(cwd), cwd);
         printf("%s: ", cwd);
@@ -78,14 +93,18 @@ int main() {
             continue;
         } else if(strcmp(command, "help") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nexit - end session\n");
+            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nread - read file content(read [filename.file_extension])\nexit - end session\n");
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         } else if (strncmp(command, "cfile ", 6) == 0) {
             create_file(command + 6);
             continue;
-        } else if(strcmp(command, "version") == 0) {
+        } else if (strncmp(command, "read ", 5) == 0) {
+            read_file(command + 5);
+            continue;
+        }
+        else if(strcmp(command, "version") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-            printf("Nowa-Terminal: 1.1\n\n");
+            printf("Nowa-Terminal: 1.2\n\n");
             print_command_output("Bash", "bash --version");
             printf("\n");
             print_command_output("Curl", "curl --version");
