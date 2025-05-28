@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <direct.h>
 
+
 HANDLE hConsole;
 
 void clear_stdin() {
@@ -59,8 +60,8 @@ void read_file(const char *filename) {
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         return;
     }
-    char stringF[65536];
-    while(fgets(stringF, 65536, file)) {
+    char stringF[sizeof(filename)];
+    while(fgets(stringF, sizeof(filename), file)) {
         printf("%s", stringF);
     }
     fclose(file);
@@ -70,9 +71,10 @@ void read_file(const char *filename) {
 
 int main() {
     char cwd[1024];
-    char command[256];
+    char command[512];
+    SetConsoleTitle("Nowa Terminal 1.3");
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    printf("Nowa-Terminal v1.2, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
+    printf("Nowa-Terminal v1.3, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
     while (1) {
         GetCurrentDirectoryA(sizeof(cwd), cwd);
         printf("%s: ", cwd);
@@ -93,7 +95,7 @@ int main() {
             continue;
         } else if(strcmp(command, "help") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nread - read file content(read [filename.file_extension])\nexit - end session\n");
+            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nread - read file content(read [filename.file_extension])\nclear - clear terminal\ntitle - rename terminal title(title [name])\nexit - end session\n");
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         } else if (strncmp(command, "cfile ", 6) == 0) {
             create_file(command + 6);
@@ -104,12 +106,25 @@ int main() {
         }
         else if(strcmp(command, "version") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-            printf("Nowa-Terminal: 1.2\n\n");
+            printf("Nowa-Terminal: 1.3\n\n");
             print_command_output("Bash", "bash --version");
             printf("\n");
             print_command_output("Curl", "curl --version");
             printf("\n");
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        } else if(strncmp(command, "title ", 6) == 0) {
+            char* titlename = command + 6;
+            if(strcmp(titlename, "") == 0) {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+                printf("title: cannot rename app title, invalid name\n");
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            } else {
+                SetConsoleTitle(titlename);
+            }
+            continue;
+        } else if(strcmp(command, "clear") == 0) {
+            system("cls");
+            continue;
         }
         else if (strncmp(command, "rfile ", 6) == 0) {
             delete_file(command + 6);
@@ -119,7 +134,14 @@ int main() {
             system("dir");
             continue;
         } else if(strncmp(command, "cd ", 3) == 0) {
-            chdir(command + 3);
+            char* dirname = command + 3;
+            if(strcmp(dirname, "") == 0) {
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+                printf("cd: cannot go directory, maybe is not exist\n");
+                SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+            } else {
+                chdir(dirname);
+            }
             continue;
         } else if(strncmp(command, "cdir ", 5) == 0) {
             char* dirname = command + 5;

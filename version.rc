@@ -16,11 +16,11 @@ BEGIN
     BEGIN
       VALUE "CompanyName",      "Nowa Team\0"
       VALUE "FileDescription",  "Simple and fast terminal\0"
-      VALUE "FileVersion",      "1.2\0"
+      VALUE "FileVersion",      "1.3.0.0\0"
       VALUE "InternalName",     "nowa-terminal.exe\0"
       VALUE "OriginalFilename", "nowa-terminal.exe\0"
       VALUE "ProductName",      "Nowa Terminal\0"
-      VALUE "ProductVersion",   "1.2\0"
+      VALUE "ProductVersion",   "1.3\0"
     END
   END
   BLOCK "VarFileInfo"
