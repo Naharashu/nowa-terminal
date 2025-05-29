@@ -67,14 +67,36 @@ void read_file(const char *filename) {
     fclose(file);
 }
 
+void get_cpu_name(char *cpu_name, DWORD size) {
+    HKEY hKey;
+    if (RegOpenKeyExA(
+        HKEY_LOCAL_MACHINE,
+        "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+        0,
+        KEY_READ,
+        &hKey) == ERROR_SUCCESS)
+    {
+        RegQueryValueExA(
+            hKey,
+            "ProcessorNameString",
+            NULL,
+            NULL,
+            (LPBYTE)cpu_name,
+            &size);
+
+        RegCloseKey(hKey);
+    } else {
+        snprintf(cpu_name, size, "Unknown CPU");
+    }
+}
 
 
 int main() {
     char cwd[1024];
     char command[512];
-    SetConsoleTitle("Nowa Terminal 1.3");
+    SetConsoleTitle("Nowa Terminal 1.4");
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    printf("Nowa-Terminal v1.3, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
+    printf("Nowa-Terminal v1.4, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
     while (1) {
         GetCurrentDirectoryA(sizeof(cwd), cwd);
         printf("%s: ", cwd);
@@ -95,12 +117,88 @@ int main() {
             continue;
         } else if(strcmp(command, "help") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nread - read file content(read [filename.file_extension])\nclear - clear terminal\ntitle - rename terminal title(title [name])\nexit - end session\n");
+            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nread - read file content(read [filename.file_extension])\nclear - clear terminal\ntitle - rename terminal title(title [name])\nsysinfo - info about system\nexit - end session\n");
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         } else if (strncmp(command, "cfile ", 6) == 0) {
             create_file(command + 6);
             continue;
-        } else if (strncmp(command, "read ", 5) == 0) {
+        } else if (strcmp(command, "sysinfo") == 0) {
+            char username[256];
+            DWORD username_len = sizeof(username);
+            GetUserNameA(username, &username_len);
+
+            char computerName[256];
+            DWORD computer_len = sizeof(computerName);
+            GetComputerNameA(computerName, &computer_len);
+
+            OSVERSIONINFOEXA osvi;
+            ZeroMemory(&osvi, sizeof(OSVERSIONINFOEXA));
+            osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXA);
+            GetVersionExA((LPOSVERSIONINFOA)&osvi);
+
+            SYSTEM_INFO siSysInfo;
+            GetNativeSystemInfo(&siSysInfo);
+            SYSTEM_INFO si;
+            GetNativeSystemInfo(&si);
+
+            const char* arch;
+            switch (si.wProcessorArchitecture) {
+                case PROCESSOR_ARCHITECTURE_AMD64:
+                    arch = "x64";
+                    break;
+                case PROCESSOR_ARCHITECTURE_INTEL:
+                    arch = "x86";
+                    break;
+                case PROCESSOR_ARCHITECTURE_ARM:
+                    arch = "ARM";
+                    break;
+                case PROCESSOR_ARCHITECTURE_ARM64:
+                    arch = "ARM64";
+                    break;
+                default:
+                    arch = "Unknown";
+                    break;
+            }
+            SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+            printf("                    .oodMMMMMMMMMMMM\n");
+            printf("       ..oodMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" oodMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf("\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" MMMMMMMMMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf(" `^^^^^^MMMMMMM  MMMMMMMMMMMMMMMMMMM\n");
+            printf("       ````^^^^  ^^MMMMMMMMMMMMMMMMM\n");
+            printf("                       ```^^^^^^MMMM\n");
+            SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+            printf("Nowa-Terminal: v1.4\n");
+            printf("-------------------------------\n");
+            printf("User:       %s\n", username);
+            printf("Hostname:   %s\n", computerName);
+            printf("OS:         Windows %lu.%lu (Build %lu)\n", osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
+            printf("Arch:       %s\n", arch);
+            printf("Shell:      Nowa-Terminal\n");
+            char cpu_name[256];
+            get_cpu_name(cpu_name, sizeof(cpu_name));
+            printf("CPU:        %s\n", cpu_name);
+            print_command_output("GPU", "wmic path win32_VideoController get name");
+            MEMORYSTATUSEX statex;
+            statex.dwLength = sizeof(statex);
+            if (GlobalMemoryStatusEx(&statex)) {
+                printf("RAM:        %llu MB\n", statex.ullTotalPhys / (1024 * 1024));
+            }
+            print_command_output("BIOS", "wmic bios get smbiosbiosversion");
+            continue;
+        }
+        else if (strncmp(command, "read ", 5) == 0) {
             read_file(command + 5);
             continue;
         }
