@@ -52,6 +52,19 @@ void delete_file(const char *filename) {
     }
 }
 
+void write_file(const char *filename, char* text) {
+    if (sizeof(text) > 1024) {
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_INTENSITY);
+        printf("wfile: Cannot write to file '%s', because text to write is to large(expected: less than 1025 chars, get: %d\n", filename, sizeof(text));
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+        return;
+    }
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) { create_file(filename); }
+    fprintf(file, text);
+    fclose(file);
+}
+
 void read_file(const char *filename) {
     FILE *file = fopen(filename, "r");  
     if (file == NULL) {
@@ -92,11 +105,11 @@ void get_cpu_name(char *cpu_name, DWORD size) {
 
 
 int main() {
-    char cwd[1024];
-    char command[512];
-    SetConsoleTitle("Nowa Terminal 1.4");
+    char cwd[2048];
+    char command[1024];
+    SetConsoleTitle("Nowa Terminal 1.5");
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    printf("Nowa-Terminal v1.4, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
+    printf("Nowa-Terminal v1.5, type \"help\" to see list of commands and \"version\" to see versions of moduls and app.\n");
     while (1) {
         GetCurrentDirectoryA(sizeof(cwd), cwd);
         printf("%s: ", cwd);
@@ -117,7 +130,7 @@ int main() {
             continue;
         } else if(strcmp(command, "help") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nread - read file content(read [filename.file_extension])\nclear - clear terminal\ntitle - rename terminal title(title [name])\nsysinfo - info about system\nexit - end session\n");
+            printf("echo - print text(echo [text])\nls - show info about directory and files in it\ncd - go to directory(cd [dirname])\ncdir - create directory(cdir [dirname])\nrdir - remove directory if it empty(rdir [dirname])\ncurl - use curl(curl [params])\ncfile - create file(cfile [filename.file_extension])\nrfile - remove file(rfile [filename.file_extension])\nwfile - write text to file(wfile [filename])\nread - read file content(read [filename.file_extension])\nclear - clear terminal\ntitle - rename terminal title(title [name])\nsysinfo - info about system\nexit - end session\n");
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
         } else if (strncmp(command, "cfile ", 6) == 0) {
             create_file(command + 6);
@@ -228,10 +241,13 @@ int main() {
         else if (strncmp(command, "read ", 5) == 0) {
             read_file(command + 5);
             continue;
+        } else if(strncmp(command, "exec ", 5) == 0) {
+            system(command + 5);
+            continue;
         }
         else if(strcmp(command, "version") == 0) {
             SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-            printf("Nowa-Terminal: 1.3\n\n");
+            printf("Nowa-Terminal: 1.5\n\n");
             print_command_output("Bash", "bash --version");
             printf("\n");
             print_command_output("Curl", "curl --version");
@@ -254,6 +270,18 @@ int main() {
         else if (strncmp(command, "rfile ", 6) == 0) {
             delete_file(command + 6);
             continue;
+        }
+        else if(strncmp(command, "wfile ", 6) == 0) {
+            char* file_ = command + 6;
+            char msg[1024];
+            printf("Type text: ");
+            if (fgets(msg, sizeof(msg), stdin) == NULL) {
+                printf("Error reading input\n");
+                continue;
+            }
+
+            command[strcspn(msg, "\n")] = 0;
+            write_file(file_, msg);
         }
         else if(strcmp(command, "ls") == 0) {
             system("dir");
